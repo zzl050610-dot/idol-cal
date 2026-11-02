@@ -1,20 +1,67 @@
 {
   "groups": [
-    {"name": "Ringwanderung", "short": "Ring", "color": "#e05252", "type": "gcal",
-     "id": "ringwanderung.mgmt@gmail.com"},
-    {"name": "君に、胸キュン。", "short": "君", "color": "#e08a3c", "type": "timetree",
-     "id": "kimikyun_schedule"},
-    {"name": "iLiFE!", "short": "iL", "color": "#d8b52e", "type": "timetree",
-     "id": "ilife_official"},
-    {"name": "i-COL", "short": "iC", "color": "#7bb83f", "type": "timetree",
-     "id": "icol"},
-    {"name": "のんふぃく!", "short": "のん", "color": "#3fa38f", "type": "timetree",
-     "id": "nonfic_official"},
-    {"name": "STAiNY", "short": "ST", "color": "#3f8fc4", "type": "timetree",
-     "id": "stainy_liveschedule"},
-    {"name": "chuLa", "short": "ch", "color": "#6f6fd0", "type": "timetree",
-     "id": "chula_official_schedule"},
-    {"name": "HIBANA", "short": "HB", "color": "#b45fae", "type": "timetree",
-     "id": "hbn_187"}
+    {
+      "name": "Ringwanderung",
+      "short": "Ring",
+      "color": "#e05252",
+      "type": "gcal",
+      "id": "ringwanderung.mgmt@gmail.com"
+    },
+    {
+      "name": "君に、胸キュン。",
+      "short": "君",
+      "color": "#e08a3c",
+      "type": "timetree",
+      "id": "kimikyun_schedule"
+    },
+    {
+      "name": "iLiFE!",
+      "short": "iL",
+      "color": "#d8b52e",
+      "type": "timetree",
+      "id": "ilife_official"
+    },
+    {
+      "name": "i-COL",
+      "short": "iC",
+      "color": "#7bb83f",
+      "type": "timetree",
+      "id": "icol"
+    },
+    {
+      "name": "のんふぃく!",
+      "short": "のん",
+      "color": "#3fa38f",
+      "type": "timetree",
+      "id": "nonfic_official"
+    },
+    {
+      "name": "STAiNY",
+      "short": "ST",
+      "color": "#3f8fc4",
+      "type": "timetree",
+      "id": "stainy_liveschedule"
+    },
+    {
+      "name": "chuLa",
+      "short": "ch",
+      "color": "#6f6fd0",
+      "type": "timetree",
+      "id": "chula_official_schedule"
+    },
+    {
+      "name": "HIBANA",
+      "short": "HB",
+      "color": "#b45fae",
+      "type": "timetree",
+      "id": "hbn_187"
+    },
+    {
+      "name": "iON!",
+      "type": "timetree",
+      "id": "ion_heroines",
+      "short": "iON",
+      "color": "#888888"
+    }
   ]
 }
