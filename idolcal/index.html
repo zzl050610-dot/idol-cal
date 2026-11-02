@@ -247,6 +247,17 @@ async function boot() {
   render();
 }
 
+function openAddIssue() {
+  const host = location.hostname;
+  const seg = location.pathname.split('/').filter(Boolean);
+  if (host.endsWith('.github.io') && seg.length) {
+    const user = host.split('.')[0];
+    window.open(`https://github.com/${user}/${seg[0]}/issues/new?template=add-group.yml`, '_blank');
+  } else {
+    alert('这个页面没接后端，请到仓库用「加一个团」的 Issue 模板添加');
+  }
+}
+
 async function loadStatic() {
   try {
     const d = await (await fetch('./data.json?t=' + Date.now())).json();
@@ -255,8 +266,8 @@ async function loadStatic() {
     S.updated = d.updated || 0;
     if (!S.on.size) S.groups.forEach(g => S.on.add(g.name));
     renderChips();
-    /* 静态托管没有后端：藏掉加团/自动更新，刷新改成重新载入 */
-    $('add').style.display = 'none';
+    /* 静态托管没有后端：加团改成开 GitHub Issue 表单 */
+    $('add').onclick = openAddIssue;
     $('autoChk').closest('label').style.display = 'none';
     $('refresh').textContent = '重新载入';
     $('status').textContent = `${S.events.length} 场 · 静态版`;
