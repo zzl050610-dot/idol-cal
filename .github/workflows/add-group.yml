@@ -1,0 +1,74 @@
+name: add-group
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  add:
+    # 只有仓库主自己提的才会执行，防止陌生人乱加
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Add group
+        id: add
+        continue-on-error: true
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: python idolcal/add_group.py
+
+      - name: Commit
+        if: steps.add.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add idolcal/groups.json
+          git commit -m "feat: add group (#${{ github.event.issue.number }})" || exit 0
+          git push
+
+      # 用 bot token 推的提交不会触发其他 workflow，所以显式叫一次重建
+      - name: Trigger rebuild
+        if: steps.add.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'idolcal.yml',
+              ref: 'main'
+            });
+
+      - name: Reply
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let msg = '没有读到结果，看看日志';
+            try { msg = fs.readFileSync('result.txt', 'utf8').trim(); } catch (e) {}
+            const ok = '${{ steps.add.outcome }}' === 'success';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: (ok ? '✅ ' : '❌ ') + msg +
+                    (ok ? '\n\n约 1–2 分钟后网站会更新。' : '')
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
