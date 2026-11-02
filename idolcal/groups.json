@@ -62,6 +62,13 @@
       "id": "ion_heroines",
       "short": "iON",
       "color": "#888888"
+    },
+    {
+      "name": "iMiN",
+      "short": "iMi",
+      "color": "#3fa38f",
+      "type": "timetree",
+      "id": "imin_official"
     }
   ]
 }
