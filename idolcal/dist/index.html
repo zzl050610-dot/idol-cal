@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IDOL CAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+:root{
+  --blue:#1a73e8; --blue-dark:#1557b0; --text:#3c4043; --muted:#5f6368;
+  --line:#dadce0; --bg:#fff; --hover:#f1f3f4; --today:#e8f0fe;
+  --shadow:0 1px 2px rgba(60,64,67,.3),0 1px 3px 1px rgba(60,64,67,.15);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.4 Roboto,"Helvetica Neue","Hiragino Sans","Noto Sans JP",
+       "Microsoft YaHei",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+
+/* ---------- 顶栏 ---------- */
+header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:8px;padding:8px 16px;min-height:64px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:12px}
+.mark{width:28px;height:28px;border-radius:6px;background:var(--blue);color:#fff;
+  display:grid;place-items:center;font-size:13px;font-weight:700;letter-spacing:.02em}
+.brand .name{font-size:20px;color:var(--muted);letter-spacing:.01em}
+.grow{flex:1}
+.iconbtn{width:36px;height:36px;border-radius:50%;border:0;background:transparent;
+  color:var(--muted);font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.iconbtn:hover{background:var(--hover)}
+.btn{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:4px;
+  padding:7px 14px;font-size:14px;cursor:pointer}
+.btn:hover{background:var(--hover)}
+.btn.filled{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.filled:hover{background:var(--blue-dark);border-color:var(--blue-dark)}
+.monthtitle{font-size:20px;font-weight:400;color:var(--text);min-width:132px;margin-left:4px}
+.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:#fff;color:var(--muted);padding:7px 14px;font-size:14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--today);color:var(--blue);font-weight:500}
+
+/* ---------- 筛选 ---------- */
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);
+  background:#fff;position:sticky;top:64px;z-index:15}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);
+  border-radius:16px;padding:5px 12px;font-size:13px;color:var(--muted);cursor:pointer;
+  background:#fff;user-select:none;transition:background .12s,border-color .12s}
+.chip:hover{background:var(--hover)}
+.chip.on{color:var(--text);border-color:var(--line);background:#fff}
+.chip:not(.on){opacity:.55}
+.chip .dot{width:9px;height:9px;border-radius:50%;flex:none}
+
+/* ---------- 月历 ---------- */
+main{padding:0 16px 72px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
+  border-left:1px solid var(--line);border-top:1px solid var(--line);margin-top:12px}
+.wd{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  text-align:center;font-size:11px;color:var(--muted);padding:6px 0;letter-spacing:.04em}
+.cell{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  min-height:118px;padding:2px 4px 6px;overflow:hidden}
+.cell.other{background:#fafafa}
+.cell.other .dnum{color:#bdc1c6}
+.dnum{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  font-size:12px;color:var(--muted);margin:2px 0 2px 2px}
+.cell.today .dnum{background:var(--blue);color:#fff;font-weight:500}
+.ev{display:flex;align-items:baseline;gap:5px;font-size:12px;line-height:1.5;
+  padding:0 4px 0 4px;border-radius:4px;margin:1px 0;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.ev:hover{background:var(--hover)}
+.ev .dot{width:8px;height:8px;border-radius:50%;flex:none;position:relative;top:-1px}
+.ev .tm{color:var(--muted);flex:none;font-variant-numeric:tabular-nums}
+.ev .tt{overflow:hidden;text-overflow:ellipsis}
+.more{font-size:12px;color:var(--muted);padding:1px 4px;border-radius:4px;cursor:pointer;
+  display:inline-block;margin-top:1px}
+.more:hover{background:var(--hover);color:var(--blue)}
+
+/* ---------- 列表 ---------- */
+.list{display:none;margin-top:8px}
+.list.on{display:block}
+.cal.off{display:none}
+.dayrow{display:flex;gap:14px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.daybox{width:64px;flex:none;display:flex;flex-direction:column;align-items:center;
+  padding-top:2px}
+.daybox .n{font-size:22px;line-height:1.1;color:var(--blue);font-weight:400}
+.daybox .n.muted{color:var(--muted)}
+.daybox .w{font-size:11px;color:var(--muted);margin-top:2px}
+.evs{flex:1;min-width:0}
+.lrow{display:flex;align-items:baseline;gap:10px;padding:3px 6px;border-radius:6px;cursor:pointer}
+.lrow:hover{background:var(--hover)}
+.lrow .dot{width:9px;height:9px;border-radius:50%;flex:none;position:relative;top:-1px}
+.lrow .tm{width:46px;flex:none;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.lrow .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lrow .loc{color:var(--muted);font-size:12px;max-width:36%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;flex:none}
+.empty{color:var(--muted);padding:24px 4px}
+
+/* ---------- 事件详情浮层 ---------- */
+.pop{position:fixed;z-index:60;width:340px;max-width:calc(100vw - 24px);background:#fff;
+  border-radius:8px;box-shadow:0 4px 8px 3px rgba(60,64,67,.15),0 1px 3px rgba(60,64,67,.3);
+  padding:14px 16px 12px;display:none}
+.pop.show{display:block;animation:pop .12s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.pop-x{position:absolute;top:8px;right:8px;width:28px;height:28px;border:0;border-radius:50%;
+  background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer}
+.pop-x:hover{background:var(--hover)}
+.pop-g{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.pop-g .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.pop-t{font-size:17px;font-weight:500;line-height:1.35;margin:0 26px 10px 0;color:var(--text);
+  word-break:break-word}
+.pop-row{display:flex;gap:9px;font-size:13px;color:var(--text);margin:5px 0;line-height:1.45}
+.pop-row .ico{width:16px;flex:none;color:var(--muted);text-align:center;font-size:13px}
+.pop-note{margin:10px 0 0;padding-top:9px;border-top:1px solid var(--line);font-size:12px;
+  color:var(--muted);white-space:pre-wrap;max-height:150px;overflow:auto;line-height:1.55}
+.pop-link{display:inline-block;margin-top:10px;font-size:13px;color:var(--blue);
+  text-decoration:none}
+.pop-link:hover{text-decoration:underline}
+
+/* ---------- 底栏 ---------- */
+footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+  padding:7px 16px;font-size:11px;color:var(--muted);display:flex;gap:16px;z-index:10}
+.err{color:#d93025}
+.auto{display:inline-flex;align-items:center;gap:5px;cursor:pointer;user-select:none}
+.auto input{accent-color:var(--blue);cursor:pointer}
+
+.toast{position:fixed;left:50%;bottom:52px;transform:translate(-50%,8px);z-index:80;
+  background:#202124;color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;
+  box-shadow:0 3px 10px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.18s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- 对话框 ---------- */
+dialog{border:0;border-radius:8px;padding:0;width:min(92vw,420px);box-shadow:var(--shadow);
+  color:var(--text);font:inherit}
+dialog::backdrop{background:rgba(32,33,36,.5)}
+.dlg-head{padding:18px 24px 8px;font-size:18px;font-weight:500}
+.dlg-body{padding:0 24px 8px}
+.dlg-body label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+.dlg-body input,.dlg-body select{width:100%;padding:9px 10px;border:1px solid var(--line);
+  border-radius:4px;font:inherit;color:var(--text);background:#fff}
+.dlg-body input:focus,.dlg-body select:focus{outline:2px solid var(--blue);outline-offset:-1px;
+  border-color:transparent}
+.hint{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 4px}
+.hint code{background:var(--hover);padding:1px 4px;border-radius:3px;font-size:11px}
+.dlg-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 24px 20px}
+.dlg-foot .btn{padding:8px 20px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark">IC</div>
+    <span class="name">IDOL CAL</span>
+  </div>
+  <button class="btn" id="today">今天</button>
+  <button class="iconbtn" id="prev" title="上个月">‹</button>
+  <button class="iconbtn" id="next" title="下个月">›</button>
+  <div class="monthtitle" id="mtitle"></div>
+  <div class="grow"></div>
+  <div class="seg">
+    <button id="vGrid" class="on">月</button>
+    <button id="vList">列表</button>
+  </div>
+  <button class="btn" id="refresh">刷新</button>
+  <button class="btn filled" id="add">＋ 加团</button>
+</header>
+
+<div class="chips" id="chips"></div>
+
+<main>
+  <div class="cal" id="grid"></div>
+  <div class="list" id="list"></div>
+</main>
+
+<footer>
+  <span id="status">加载中…</span>
+  <span id="updated"></span>
+  <label class="auto"><input type="checkbox" id="autoChk"> 自动更新</label>
+  <span class="err" id="err"></span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<dialog id="dlg">
+  <div class="dlg-head">添加团体的日历</div>
+  <div class="dlg-body">
+    <p class="hint">TimeTree：填公开日历链接里 <code>public_calendars/</code> 后面那段。<br>
+      例：<code>timetreeapp.com/public_calendars/hbn_187</code> → 填 <code>hbn_187</code></p>
+    <label for="fType">来源类型</label>
+    <select id="fType">
+      <option value="timetree">TimeTree 公开日历</option>
+      <option value="gcal">Google Calendar（公开 ID 或 ICS 链接）</option>
+    </select>
+    <label for="fId">ID / 链接</label>
+    <input id="fId" placeholder="hbn_187 或 xxx@gmail.com" autocomplete="off">
+  </div>
+  <div class="dlg-foot">
+    <button class="btn" id="fCancel" type="button">取消</button>
+    <button class="btn filled" id="fOk" type="button">添加</button>
+  </div>
+</dialog>
+
+<div class="pop" id="pop">
+  <button class="pop-x" id="popX" aria-label="关闭">×</button>
+  <div class="pop-g"><span class="dot" id="popDot"></span><span id="popGroup"></span></div>
+  <h3 class="pop-t" id="popTitle"></h3>
+  <div class="pop-row"><span class="ico">◷</span><span id="popWhen"></span></div>
+  <div class="pop-row" id="popLocRow"><span class="ico">◉</span><span id="popLoc"></span></div>
+  <div class="pop-note" id="popNote"></div>
+  <a class="pop-link" id="popLink" target="_blank" rel="noopener" hidden>打开日历页面 ↗</a>
+</div>
+
+<script>
+const S = { groups: [], events: [], on: new Set(), cur: new Date(), view: 'grid', expanded: {}, updated: 0 };
+let API = true;
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const WD = '日一二三四五六';
+
+function tint(hex, a) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function esc(s) {
+  return String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+async function boot() {
+  try {
+    const r = await fetch('/api/config');
+    if (!r.ok) throw new Error('no api');
+    const cfg = await r.json();
+    S.groups = cfg.groups;
+    API = true;
+  } catch (e) {
+    API = false;
+  }
+  if (API) {
+    S.groups.forEach(g => S.on.add(g.name));
+    renderChips();
+    await loadEvents();
+  } else {
+    await loadStatic();
+  }
+  render();
+}
+
+async function loadStatic() {
+  try {
+    const d = await (await fetch('./data.json?t=' + Date.now())).json();
+    S.groups = d.groups || [];
+    S.events = d.events || [];
+    S.updated = d.updated || 0;
+    if (!S.on.size) S.groups.forEach(g => S.on.add(g.name));
+    renderChips();
+    /* 静态托管没有后端：藏掉加团/自动更新，刷新改成重新载入 */
+    $('add').style.display = 'none';
+    $('autoChk').closest('label').style.display = 'none';
+    $('refresh').textContent = '重新载入';
+    $('status').textContent = `${S.events.length} 场 · 静态版`;
+    $('err').textContent = '';
+    paintMeta();
+  } catch (e) {
+    $('status').textContent = '数据载入失败';
+    $('err').textContent = e.message;
+  }
+}
+
+async function loadEvents() {
+  try {
+    const r = await fetch('/api/events');
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    S.events = j.events;
+    S.updated = j.updated || 0;
+    $('status').textContent = `${j.events.length} 场 · ${S.groups.length} 团`;
+    $('err').textContent = (j.errors || []).map(e => e.group + ' 抓取失败').join(' · ');
+    paintMeta();
+  } catch (e) {
+    $('status').textContent = '加载失败';
+    $('err').textContent = e.message;
+  }
+}
+
+function paintMeta() {
+  if (!S.updated) return;
+  const d = new Date(S.updated * 1000);
+  const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+  const rel = mins < 1 ? '刚刚' : mins < 60 ? `${mins} 分钟前`
+            : mins < 1440 ? `${Math.floor(mins / 60)} 小时前` : `${Math.floor(mins / 1440)} 天前`;
+  $('updated').textContent =
+    `更新于 ${pad(d.getHours())}:${pad(d.getMinutes())}（${rel}）`;
+}
+setInterval(paintMeta, 30000);
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function waitDone() {
+  return new Promise(resolve => {
+    const tick = async () => {
+      try {
+        const s = await (await fetch('/api/status')).json();
+        if (!s.running) return resolve(s);
+      } catch (e) { /* 忽略，继续等 */ }
+      setTimeout(tick, 1500);
+    };
+    tick();
+  });
+}
+
+async function doRefresh() {
+  if (!API) { await loadStatic(); render(); toast('已重新载入'); return; }
+  const btn = $('refresh');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const label = btn.textContent;
+  btn.textContent = '更新中…';
+  $('status').textContent = '正在抓取 8 个日历…';
+  try {
+    await fetch('/api/refresh', { method: 'POST' });
+    const s = await waitDone();
+    await loadEvents();
+    render();
+    if (s && s.error) toast('部分失败：' + s.error);
+    else toast('已更新');
+  } catch (e) {
+    toast('更新失败');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+}
+
+function renderChips() {
+  const box = $('chips');
+  box.innerHTML = '';
+  S.groups.forEach(g => {
+    const el = document.createElement('div');
+    el.className = 'chip' + (S.on.has(g.name) ? ' on' : '');
+    el.innerHTML = `<span class="dot" style="background:${g.color}"></span>${esc(g.name)}`;
+    el.onclick = () => {
+      S.on.has(g.name) ? S.on.delete(g.name) : S.on.add(g.name);
+      el.classList.toggle('on');
+      render();
+    };
+    box.appendChild(el);
+  });
+}
+
+function render() {
+  const y = S.cur.getFullYear(), m = S.cur.getMonth();
+  $('mtitle').textContent = `${y}年${m + 1}月`;
+  const byDate = {};
+  S.events.filter(e => S.on.has(e.group)).forEach(e => (byDate[e.date] ||= []).push(e));
+  S.view === 'grid' ? renderGrid(y, m, byDate) : renderList(byDate);
+}
+
+function renderGrid(y, m, byDate) {
+  const g = $('grid');
+  g.innerHTML = '';
+  ['日', '月', '火', '水', '木', '金', '土'].forEach(w => {
+    const d = document.createElement('div');
+    d.className = 'wd';
+    d.textContent = w;
+    g.appendChild(d);
+  });
+  const first = new Date(y, m, 1);
+  const start = new Date(first);
+  start.setDate(1 - first.getDay());
+  const todayStr = ymd(new Date());
+  const maxShow = 3;
+
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const key = ymd(d);
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (d.getMonth() !== m ? ' other' : '') + (key === todayStr ? ' today' : '');
+    const num = document.createElement('div');
+    num.className = 'dnum';
+    num.textContent = d.getDate();
+    cell.appendChild(num);
+    const evs = byDate[key] || [];
+    const open = S.expanded[key] || maxShow;
+    evs.slice(0, open).forEach(e => cell.appendChild(evEl(e)));
+    if (evs.length > open) {
+      const more = document.createElement('span');
+      more.className = 'more';
+      more.textContent = `+${evs.length - open} 更多`;
+      more.onclick = ev => { S.expanded[key] = evs.length; render(); };
+      cell.appendChild(more);
+    }
+    g.appendChild(cell);
+  }
+}
+
+function evEl(e) {
+  const el = document.createElement('div');
+  el.className = 'ev';
+  el.style.background = tint(e.color, 0.14);
+  el.innerHTML =
+    `<span class="dot" style="background:${e.color}"></span>` +
+    (e.time ? `<span class="tm">${e.time}</span>` : '') +
+    `<span class="tt">${esc(e.title)}</span>`;
+  el.addEventListener('click', ev => { ev.stopPropagation(); showPop(e, el); });
+  return el;
+}
+
+/* ---------- 详情浮层 ---------- */
+const POPW = 340;
+function fmtDate(day, time) {
+  const d = new Date(day + 'T00:00:00');
+  const w = '日一二三四五六'[d.getDay()];
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${w}）`
+    + (time ? ` · ${time}` : ' · 終日');
+}
+
+function showPop(e, anchor) {
+  const pop = $('pop');
+  $('popDot').style.background = e.color;
+  $('popGroup').textContent = e.group;
+  $('popTitle').textContent = e.title || '（无标题）';
+  $('popWhen').textContent = fmtDate(e.date, e.time);
+  $('popLocRow').style.display = e.location ? 'flex' : 'none';
+  $('popLoc').textContent = e.location || '';
+  $('popNote').textContent = e.note || '';
+  $('popNote').style.display = e.note ? 'block' : 'none';
+  const link = $('popLink');
+  if (e.url) { link.href = e.url; link.hidden = false; }
+  else { link.hidden = true; }
+
+  pop.classList.add('show');
+  const r = anchor.getBoundingClientRect();
+  const h = pop.offsetHeight, w = pop.offsetWidth;
+  let left = Math.min(r.left, window.innerWidth - w - 12);
+  left = Math.max(12, left);
+  let top = r.bottom + 6;
+  if (top + h > window.innerHeight - 12) top = Math.max(12, r.top - h - 6);
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+}
+
+function hidePop() { $('pop').classList.remove('show'); }
+$('popX').onclick = hidePop;
+document.addEventListener('click', ev => {
+  if (!$('pop').contains(ev.target)) hidePop();
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') hidePop(); });
+window.addEventListener('resize', hidePop);
+
+function renderList(byDate) {
+  const box = $('list');
+  box.innerHTML = '';
+  const days = Object.keys(byDate).sort();
+  if (!days.length) { box.innerHTML = '<div class="empty">这个月没有日程</div>'; return; }
+  const todayStr = ymd(new Date());
+
+  days.forEach(day => {
+    const dt = new Date(day + 'T00:00:00');
+    const row = document.createElement('div');
+    row.className = 'dayrow';
+    const dow = dt.getDay();
+    const cls = (dow === 0) ? 'n muted' : 'n';
+    const head = `<div class="daybox"><div class="${cls}">${dt.getDate()}</div>
+      <div class="w">${WD[dow]}${day === todayStr ? ' · 今天' : ''}</div></div>`;
+    row.innerHTML = head;
+    const evs = document.createElement('div');
+    evs.className = 'evs';
+    byDate[day].forEach(e => {
+      const lr = document.createElement('div');
+      lr.className = 'lrow';
+      lr.innerHTML = `<span class="dot" style="background:${e.color}"></span>
+        <span class="tm">${e.time || ''}</span>
+        <span class="ti">${esc(e.title)}</span>
+        <span class="loc">${esc(e.location)}</span>`;
+      lr.addEventListener('click', ev => { ev.stopPropagation(); showPop(e, lr); });
+      evs.appendChild(lr);
+    });
+    row.appendChild(evs);
+    box.appendChild(row);
+  });
+}
+
+$('prev').onclick = () => { S.cur.setMonth(S.cur.getMonth() - 1); S.expanded = {}; render(); };
+$('next').onclick = () => { S.cur.setMonth(S.cur.getMonth() + 1); S.expanded = {}; render(); };
+$('today').onclick = () => { S.cur = new Date(); S.expanded = {}; render(); };
+$('refresh').onclick = doRefresh;
+
+/* 自动更新：默认关，勾选后每 30 分钟跑一次 */
+const AUTO_MS = 30 * 60 * 1000;
+let autoTimer = null;
+function applyAuto(on) {
+  clearInterval(autoTimer);
+  autoTimer = on ? setInterval(doRefresh, AUTO_MS) : null;
+  localStorage.setItem('idolcal.auto', on ? '1' : '0');
+}
+$('autoChk').checked = localStorage.getItem('idolcal.auto') === '1';
+$('autoChk').onchange = e => { applyAuto(e.target.checked); toast(e.target.checked ? '已开启自动更新（每 30 分钟）' : '已关闭自动更新'); };
+applyAuto($('autoChk').checked);
+
+/* 切回标签页时，如果数据超过 30 分钟就自动更新 */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !S.updated) return;
+  if (Date.now() - S.updated * 1000 > AUTO_MS) doRefresh();
+});
+
+function setView(v) {
+  S.view = v;
+  $('vGrid').classList.toggle('on', v === 'grid');
+  $('vList').classList.toggle('on', v === 'list');
+  $('grid').classList.toggle('off', v !== 'grid');
+  $('list').classList.toggle('on', v === 'list');
+  render();
+}
+$('vGrid').onclick = () => setView('grid');
+$('vList').onclick = () => setView('list');
+
+$('add').onclick = () => { $('fId').value = ''; $('dlg').showModal(); };
+
+$('fCancel').onclick = () => $('dlg').close('cancel');
+
+$('fOk').onclick = () => {
+  if (!$('fId').value.trim()) { $('fId').focus(); return; }
+  $('dlg').close('ok');
+};
+
+/* 点遮罩关闭 */
+$('dlg').addEventListener('click', ev => {
+  const r = $('dlg').getBoundingClientRect();
+  if (ev.clientX < r.left || ev.clientX > r.right ||
+      ev.clientY < r.top || ev.clientY > r.bottom) $('dlg').close('cancel');
+});
+
+$('dlg').addEventListener('close', async () => {
+  if ($('dlg').returnValue !== 'ok') return;
+  const id = $('fId').value.trim();
+  if (!id) return;
+  const res = await fetch('/api/groups', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, type: $('fType').value })
+  });
+  const j = await res.json();
+  if (j.error) { alert(j.error); return; }
+  location.reload();
+});
+
+boot();
+</script>
+</body>
+</html>
