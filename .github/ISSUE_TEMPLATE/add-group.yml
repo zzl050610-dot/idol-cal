@@ -1,0 +1,41 @@
+name: 加一个团
+description: 填团名和日历 ID，提交后网站会自动更新
+title: "[加团] "
+labels: ["add-group"]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: 团名
+      description: 显示在网页顶部的名字
+      placeholder: 例如 Ringwanderung
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 日历类型
+      options:
+        - TimeTree
+        - Google Calendar
+    validations:
+      required: true
+
+  - type: input
+    id: ident
+    attributes:
+      label: 日历 ID 或链接
+      description: TimeTree 填链接里 public_calendars/ 后面那段，也可以直接粘整条链接
+      placeholder: hbn_187
+    validations:
+      required: true
+
+  - type: input
+    id: color
+    attributes:
+      label: 颜色（可选）
+      description: 十六进制色值，不填就用默认色
+      placeholder: "#3fa38f"
+    validations:
+      required: false
