@@ -38,19 +38,29 @@ _state = {"running": False, "last": 0, "count": 0, "errors": [], "error": None}
 
 
 # ---------------------------------------------------------------- 数据源
-def _http(url, headers, tries=3):
+def _http(url, headers, tries=3, timeout=40):
     last = None
     for _ in range(tries):
         try:
             return urllib.request.urlopen(
-                urllib.request.Request(url, headers=headers), timeout=40).read()
+                urllib.request.Request(url, headers=headers), timeout=timeout).read()
         except Exception as e:  # noqa: BLE001
             last = e
             time.sleep(1.5)
     raise last
 
 
+def normalize_alias(value):
+    """从链接或带参数的输入里提取干净的 TimeTree alias。"""
+    value = (value or "").strip()
+    m = re.search(r"public_calendars/([A-Za-z0-9_\-]+)", value)
+    if m:
+        return m.group(1)
+    return value.split("?")[0].split("#")[0].split("/")[0].strip()
+
+
 def fetch_timetree(alias):
+    alias = normalize_alias(alias)
     meta = json.loads(_http(f"{TT_API}/{alias}", TT_HEADERS))
     cal = meta["public_calendar"]
     events, cursor = [], None
@@ -67,11 +77,29 @@ def fetch_timetree(alias):
     return cal.get("name") or alias, events
 
 
+def _ics_urls(calendar_id):
+    if calendar_id.startswith("http"):
+        return [calendar_id]
+    q = urllib.parse.quote(calendar_id, safe="")
+    return [f"https://calendar.google.com/calendar/ical/{q}/public/basic.ics",
+            f"https://www.google.com/calendar/ical/{q}/public/basic.ics"]
+
+
 def fetch_ics(calendar_id):
-    url = (calendar_id if calendar_id.startswith("http") else
-           f"https://calendar.google.com/calendar/ical/"
-           f"{urllib.parse.quote(calendar_id)}/public/basic.ics")
-    raw = _http(url, UA).decode("utf-8", "ignore")
+    headers = dict(UA, Accept="text/calendar,text/plain,*/*")
+    raw, last = None, None
+    for url in _ics_urls(calendar_id):
+        try:
+            body = _http(url, headers, timeout=60).decode("utf-8", "ignore")
+            if "BEGIN:VCALENDAR" in body:
+                raw = body
+                break
+            last = f"返回的不是 iCalendar（可能被拦截或链接失效）: {body[:80]!r}"
+        except Exception as e:  # noqa: BLE001
+            last = str(e)[:120]
+    if raw is None:
+        raise RuntimeError(last or "ICS 抓取失败")
+
     raw = raw.replace("\r\n", "\n").replace("\n ", "").replace("\n\t", "")
     out = []
     for block in re.findall(r"BEGIN:VEVENT(.*?)END:VEVENT", raw, re.S):
@@ -157,9 +185,11 @@ def build_events(groups=None, force=False):
             items = [x for x in (normalize(g, r) for r in raws) if x]
             with lock:
                 collected.extend(items)
+            print(f"[ok] {g['name']}: {len(items)} 场", flush=True)
         except Exception as e:  # noqa: BLE001
             with lock:
                 errors.append({"group": g["name"], "error": str(e)[:120]})
+            print(f"[fail] {g['name']}: {str(e)[:160]}", flush=True)
 
     threads = [threading.Thread(target=work, args=(g,)) for g in groups]
     for t in threads:
@@ -269,7 +299,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(404, json.dumps({"error": "not found"}))
         length = int(self.headers.get("Content-Length") or 0)
         payload = json.loads(self.rfile.read(length) or b"{}")
-        alias = (payload.get("id") or "").strip()
+        alias = normalize_alias(payload.get("id"))
         kind = payload.get("type") or "timetree"
         if not alias:
             return self._send(400, json.dumps({"error": "id 不能为空"}))

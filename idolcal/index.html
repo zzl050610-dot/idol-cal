@@ -271,7 +271,9 @@ async function loadStatic() {
     $('autoChk').closest('label').style.display = 'none';
     $('refresh').textContent = '重新载入';
     $('status').textContent = `${S.events.length} 场 · 静态版`;
-    $('err').textContent = '';
+    const errs = d.errors || [];
+    $('err').textContent = errs.length
+      ? errs.map(x => x.group + ' 抓取失败').join(' · ') : '';
     paintMeta();
   } catch (e) {
     $('status').textContent = '数据载入失败';
